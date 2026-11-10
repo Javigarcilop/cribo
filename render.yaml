@@ -1,0 +1,20 @@
+# Despliegue en Render (plan gratuito) en MODO DEMO: sin ANTHROPIC_API_KEY,
+# así nadie puede gastar crédito de la API. Si algún día añades la clave
+# (en el panel de Render, nunca aquí), se aplican estos límites.
+services:
+  - type: web
+    name: bandeja-inteligente
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: COMPANY_NAME
+        value: Mi Empresa
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-5-5
+      - key: MAX_LLM_CALLS_PER_HOUR
+        value: "200"
+      - key: MAX_REQUESTS_PER_MINUTE
+        value: "20"

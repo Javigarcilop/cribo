@@ -27,6 +27,8 @@ Sin API key arranca en **modo demo** (reglas simples, sin IA) para poder probar 
 
 Con Docker: `docker build -t bandeja . && docker run -p 8000:8000 --env-file .env bandeja`
 
+Despliegue: `render.yaml` publica la app en Render (plan gratuito) en **modo demo**, sin `ANTHROPIC_API_KEY`. Si se añade la clave en el panel de Render, se aplican los límites de `.env.example`. En el plan gratuito el servicio se duerme tras 15 min sin visitas y la primera carga tarda alrededor de un minuto.
+
 ## Cómo funciona
 
 ```mermaid
