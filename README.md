@@ -1,12 +1,12 @@
-# Bandeja inteligente
+# Cribo
 
 Triaje de emails para empresas con IA: **clasifica** (presupuesto, incidencia, factura, comercial), **prioriza**, **extrae los datos clave** y **redacta un borrador de respuesta**. Nada sale sin que una persona lo apruebe.
 
 ![Demo: cargar ejemplos, analizar, abrir un email y aprobar el borrador](docs/demo.gif)
 
-| Bandeja sin analizar | Analizada y reordenada | Detalle con borrador |
+| Entrada sin analizar | Analizada y ordenada por prioridad | Correo abierto con respuesta preparada |
 |---|---|---|
-| ![Bandeja sin analizar](docs/1-bandeja-sin-analizar.png) | ![Bandeja analizada y ordenada por prioridad](docs/2-bandeja-analizada.png) | ![Detalle de un email con datos clave y borrador de respuesta](docs/3-detalle-borrador.png) |
+| ![Entrada sin analizar](docs/1-bandeja-sin-analizar.png) | ![Entrada ordenada por prioridad](docs/2-bandeja-analizada.png) | ![Correo abierto con ficha y respuesta preparada](docs/3-detalle-borrador.png) |
 
 <sub>Capturas en modo demo (reglas, sin IA). Los emails de ejemplo son ficticios.</sub>
 
@@ -16,7 +16,7 @@ Equipos pequeños que reciben decenas de emails al día y pierden tiempo decidie
 ## Arranque rápido
 
 ```bash
-git clone <este-repo> && cd bandeja-inteligente
+git clone https://github.com/Javigarcilop/cribo.git && cd cribo
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # opcional: añade ANTHROPIC_API_KEY para usar Claude
@@ -25,7 +25,7 @@ uvicorn app.main:app --reload # abre http://localhost:8000
 
 Sin API key arranca en **modo demo** (reglas simples, sin IA) para poder probar la interfaz. Con clave usa Claude.
 
-Con Docker: `docker build -t bandeja . && docker run -p 8000:8000 --env-file .env bandeja`
+Con Docker: `docker build -t cribo . && docker run -p 8000:8000 --env-file .env cribo`
 
 Despliegue: `render.yaml` publica la app en Render (plan gratuito) en **modo demo**, sin `ANTHROPIC_API_KEY`. Si se añade la clave en el panel de Render, se aplican los límites de `.env.example`. En el plan gratuito el servicio se duerme tras 15 min sin visitas y la primera carga tarda alrededor de un minuto.
 

@@ -3,7 +3,7 @@
 # (en el panel de Render, nunca aquí), se aplican estos límites.
 services:
   - type: web
-    name: bandeja-inteligente
+    name: cribo
     runtime: docker
     plan: free
     region: frankfurt

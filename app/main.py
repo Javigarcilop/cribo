@@ -18,7 +18,7 @@ from .schemas import OutboxIn, TriageRequest, TriageResult  # noqa: E402
 log = logging.getLogger("bandeja")
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 
-app = FastAPI(title="Bandeja inteligente", version="1.0.0")
+app = FastAPI(title="Cribo", version="1.0.0")
 
 # "Bandeja de salida" simulada: aquí solo llegan borradores APROBADOS por una persona.
 # No hay ninguna integración de envío real a propósito.
