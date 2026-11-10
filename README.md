@@ -2,7 +2,7 @@
 
 Triaje de emails para empresas con IA: **clasifica** (presupuesto, incidencia, factura, comercial), **prioriza**, **extrae los datos clave** y **redacta un borrador de respuesta**. Nada sale sin que una persona lo apruebe.
 
-**[Probar la demo](https://cribo.onrender.com)** · modo demo, sin IA: reglas locales y emails ficticios. La primera carga puede tardar alrededor de un minuto si el servidor estaba dormido.
+**[Probar la demo](https://cribo.onrender.com/?demo)** · modo demo, sin IA: reglas locales y emails ficticios. La primera carga puede tardar alrededor de un minuto si el servidor estaba dormido.
 
 ![Demo: cargar ejemplos, analizar, abrir un email y aprobar el borrador](docs/demo.gif)
 

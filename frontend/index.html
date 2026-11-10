@@ -109,11 +109,6 @@ button, input, textarea { font: inherit; color: inherit; }
 .stat { cursor: default; }
 .linkbtn svg, .stat svg { flex: none; color: var(--ink-3); }
 .side-foot { margin-top: auto; display: grid; gap: 10px; padding: 0 8px; font-size: 12px; color: var(--ink-3); }
-.mode { display: flex; gap: 8px; align-items: flex-start; }
-.mode i { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--baja); }
-.mode.live i { background: var(--ok); }
-.mode.demo i { background: var(--media); }
-.mode b { display: block; color: var(--ink-2); font-weight: 500; }
 .keys kbd { font: 500 11px var(--mono); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--ink-2); }
 
 /* Lista */
@@ -197,7 +192,6 @@ dl.data dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
 ul.todo { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
 ul.todo li { display: grid; grid-template-columns: 14px 1fr; gap: 8px; }
 ul.todo li::before { content: ""; width: 12px; height: 12px; margin-top: 4px; border: 1.5px solid var(--line-2); border-radius: 3px; }
-.runmeta { font: 400 11.5px/1.5 var(--mono); color: var(--ink-3); }
 
 .placeholder { padding: 64px 34px; max-width: 460px; color: var(--ink-2); }
 .placeholder strong { display: block; color: var(--ink); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
@@ -273,7 +267,7 @@ dialog .reply-foot { justify-content: flex-end; }
 
     <div class="group out">
       <h2>Salida</h2>
-      <div class="stat" title="Borradores aprobados. No se envía nada real.">
+      <div class="stat" title="Respuestas aprobadas">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8.5 6 12.5 14 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Aprobados <span class="count" id="outbox">0</span>
       </div>
@@ -282,9 +276,6 @@ dialog .reply-foot { justify-content: flex-end; }
     <div class="group">
       <h2>Correo</h2>
       <div class="tools-row">
-        <button class="linkbtn" id="load" type="button">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M2.5 11.5v2h11v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Cargar ejemplos</button>
         <button class="linkbtn" id="add" type="button">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Pegar un correo</button>
@@ -292,7 +283,6 @@ dialog .reply-foot { justify-content: flex-end; }
     </div>
 
     <div class="side-foot">
-      <div class="mode" id="modo"><i></i><span><b>Conectando…</b><span></span></span></div>
       <div class="keys"><kbd>j</kbd> <kbd>k</kbd> para moverte</div>
     </div>
   </aside>
@@ -414,13 +404,13 @@ dialog .reply-foot { justify-content: flex-end; }
     $("list-title").textContent = state.filter === "todas" ? "Entrada" : "Prioridad " + PRIO[state.filter].toLowerCase();
     $("list-count").textContent = state.emails.length ? String(items.length) : "";
     $("list-sort").textContent = state.emails.length ? (triaged ? "por prioridad" : "por llegada") : "";
-    if (!state.emails.length) {
+    if (state.loadingInbox) {
+      ul.replaceChildren(h("li", {}, h("div", { class: "empty-list" }, "Cargando la bandeja…")));
+    } else if (!state.emails.length) {
       ul.replaceChildren(h("li", {}, h("div", { class: "empty-list" },
-        h("p", {}, h("strong", { text: "No hay correo todavía" }),
-          "Carga los 12 correos de ejemplo de una empresa ficticia o pega uno tuyo."),
+        h("p", {}, h("strong", { text: "Tu bandeja está vacía" }), "Pega un correo y Cribo lo clasificará, sacará los datos importantes y te preparará una respuesta."),
         h("div", { class: "btns" },
-          h("button", { class: "btn primary", type: "button", onclick: loadSamples, text: "Cargar ejemplos" }),
-          h("button", { class: "btn", type: "button", onclick: () => $("dlg").showModal(), text: "Pegar un correo" })))));
+          h("button", { class: "btn primary", type: "button", onclick: () => $("dlg").showModal(), text: "Pegar un correo" })))));
     } else if (!items.length) {
       ul.replaceChildren(h("li", {}, h("div", { class: "empty-list" }, "Nada con esta prioridad.")));
     } else {
@@ -523,18 +513,10 @@ dialog .reply-foot { justify-content: flex-end; }
         datos.length ? h("dl", { class: "data" }, datos.map(([k, v]) => [h("dt", { text: DATA_LABELS[k] || k }), h("dd", { text: v })]))
                      : h("p", { class: "why", text: "Sin importes, fechas ni referencias." })),
       h("section", {}, h("h3", { text: "Pasos" }),
-        t.acciones_sugeridas.length ? h("ul", { class: "todo" }, t.acciones_sugeridas.map((a) => h("li", { text: a }))) : h("p", { class: "why", text: "Nada que hacer." })),
-      h("section", {}, h("p", { class: "runmeta", text: runMeta(e.result) })));
+        t.acciones_sugeridas.length ? h("ul", { class: "todo" }, t.acciones_sugeridas.map((a) => h("li", { text: a }))) : h("p", { class: "why", text: "Nada que hacer." })));
 
     box.replaceChildren(h("div", { class: "read" }, head,
       h("div", { class: "grid" }, h("article", { class: "mail" }, orig, replyBox(e, t)), card)));
-  }
-
-  function runMeta(r) {
-    const base = r.modo === "live" ? "analizado con Claude" : "modo demo · reglas locales, sin modelo";
-    const parts = [base, r.latencia_ms + " ms"];
-    if (r.tokens_entrada) parts.push((r.tokens_entrada + r.tokens_salida) + " tokens");
-    return parts.join(" · ");
   }
 
   function replyBox(e, t) {
@@ -560,7 +542,7 @@ dialog .reply-foot { justify-content: flex-end; }
         e.status = "aprobado";
         state.approved = r.aprobados;
         $("outbox").textContent = String(r.aprobados);
-        toast("Aprobada. Queda en la bandeja de salida; esta demo no envía correo real.");
+        toast("Respuesta aprobada y movida a la bandeja de salida.");
         renderList(); renderDetail();
       } catch (err) { toast(err.message); }
     };
@@ -573,7 +555,7 @@ dialog .reply-foot { justify-content: flex-end; }
       body,
       h("div", { class: "reply-foot" },
         e.status
-          ? h("span", { class: "done-box" + (e.status === "aprobado" ? " ok" : ""), text: e.status === "aprobado" ? "Aprobada y en la bandeja de salida (simulada)." : "Descartada. No se responderá." })
+          ? h("span", { class: "done-box" + (e.status === "aprobado" ? " ok" : ""), text: e.status === "aprobado" ? "Aprobada. Está en la bandeja de salida." : "Descartada. No se responderá." })
           : [h("button", { class: "btn primary", type: "button", onclick: approve, text: "Aprobar respuesta" }),
              h("button", { class: "btn", type: "button", onclick: discard, text: "Descartar" }),
              holes]));
@@ -609,24 +591,25 @@ dialog .reply-foot { justify-content: flex-end; }
   }
   const rank = (e) => (e.result?.triage ? RANK[e.result.triage.prioridad] : 3);
 
-  async function loadSamples() {
+  // Con ?demo en la URL (enlace del portfolio) la bandeja llega con correos de prueba.
+  // Sin él, la app arranca vacía, como en uso real.
+  const DEMO = new URLSearchParams(location.search).has("demo");
+
+  async function loadInbox() {
+    state.loadingInbox = true;
+    renderList();
     try {
-      const samples = await api("/api/samples");
+      const inbox = await api("/api/samples");
       const known = new Set(state.emails.map((e) => e.id));
-      samples.filter((s) => !known.has(s.id)).forEach((s) => state.emails.push({ ...s }));
-      renderFilters(); renderList(); renderDetail();
-    } catch (err) { toast(err.message); }
+      inbox.filter((s) => !known.has(s.id)).forEach((s) => state.emails.push({ ...s }));
+    } catch (err) { toast("No se pudo cargar la bandeja. Recarga la página."); }
+    state.loadingInbox = false;
+    renderFilters(); renderList(); renderDetail();
   }
 
-  async function init() {
+  function init() {
     renderFilters(); renderList(); renderDetail();
-    const box = $("modo");
-    try {
-      const hl = await api("/api/health");
-      box.className = "mode " + hl.modo;
-      box.querySelector("b").textContent = hl.modo === "live" ? "Conectado a Claude" : "Modo demo";
-      box.querySelector("b").nextSibling.textContent = hl.modo === "live" ? hl.modelo : "Reglas locales, sin modelo de IA";
-    } catch { box.querySelector("b").textContent = "Sin conexión con el servidor"; }
+    if (DEMO) loadInbox();
   }
 
   // Teclado: j/k para moverse por la lista, Enter para analizar lo pendiente.
@@ -644,7 +627,6 @@ dialog .reply-foot { justify-content: flex-end; }
     }
   });
 
-  $("load").onclick = loadSamples;
   $("analyze").onclick = () => analyze(null);
   $("add").onclick = () => $("dlg").showModal();
   $("dlg-cancel").onclick = () => $("dlg").close();
