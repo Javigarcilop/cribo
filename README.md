@@ -2,7 +2,13 @@
 
 Triaje de emails para empresas con IA: **clasifica** (presupuesto, incidencia, factura, comercial), **prioriza**, **extrae los datos clave** y **redacta un borrador de respuesta**. Nada sale sin que una persona lo apruebe.
 
-> Captura o GIF de la demo aquí (`docs/demo.gif`).
+![Demo: cargar ejemplos, analizar, abrir un email y aprobar el borrador](docs/demo.gif)
+
+| Bandeja sin analizar | Analizada y reordenada | Detalle con borrador |
+|---|---|---|
+| ![Bandeja sin analizar](docs/1-bandeja-sin-analizar.png) | ![Bandeja analizada y ordenada por prioridad](docs/2-bandeja-analizada.png) | ![Detalle de un email con datos clave y borrador de respuesta](docs/3-detalle-borrador.png) |
+
+<sub>Capturas en modo demo (reglas, sin IA). Los emails de ejemplo son ficticios.</sub>
 
 ## Para quién
 Equipos pequeños que reciben decenas de emails al día y pierden tiempo decidiendo qué atender primero y escribiendo respuestas repetitivas.
