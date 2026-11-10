@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+.DS_Store
+.claude/
+PROMPT_CLAUDE_CODE.md
+PORTFOLIO_FICHA.md

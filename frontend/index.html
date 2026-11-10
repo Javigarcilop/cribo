@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandeja inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E8ECF0;
+  --panel: #FFFFFF;
+  --sunk: #F1F4F7;
+  --ink: #16212C;
+  --ink-2: #4B5B6B;
+  --line: #D3DAE2;
+  --accent: #17476F;
+  --accent-ink: #FFFFFF;
+  --alta: #CF3A2C;
+  --media: #D99A12;
+  --baja: #6B7F93;
+  --ok: #1F7A55;
+  --warn-bg: #FCEDEA;
+  --warn-ink: #8E2217;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0F151B;
+    --panel: #18212A;
+    --sunk: #1F2A35;
+    --ink: #E7EDF3;
+    --ink-2: #9FB0C0;
+    --line: #2B3844;
+    --accent: #7DB8EC;
+    --accent-ink: #0B1722;
+    --alta: #F0675A;
+    --media: #E8B23D;
+    --baja: #8EA1B4;
+    --ok: #4CC38F;
+    --warn-bg: #3A1D1A;
+    --warn-ink: #FFB4AA;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 15px/1.5 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Cabecera */
+.top {
+  display: flex; flex-wrap: wrap; gap: 12px 24px;
+  align-items: flex-end; justify-content: space-between;
+  max-width: 1320px; margin: 0 auto; padding: 28px 24px 18px;
+}
+.top h1 { margin: 0; font: 800 34px/1.05 var(--display); letter-spacing: -0.02em; }
+.top p { margin: 6px 0 0; color: var(--ink-2); }
+.status { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 500;
+}
+.pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--baja); }
+.pill.live i { background: var(--ok); }
+.pill.demo i { background: var(--media); }
+
+/* Estructura */
+.layout {
+  display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 20px;
+  max-width: 1320px; margin: 0 auto; padding: 0 24px 40px; align-items: start;
+}
+.inbox {
+  position: sticky; top: 16px;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 32px);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  overflow: hidden;
+}
+.tools { padding: 14px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+.tools .row { display: flex; gap: 8px; }
+.btn {
+  appearance: none; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 9px 14px; border-radius: 9px; font-weight: 600; font-size: 14px;
+  transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--sunk); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+.btn:disabled { opacity: .55; cursor: not-allowed; filter: none; }
+.btn.grow { flex: 1; }
+
+.filters { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.chipbtn {
+  appearance: none; cursor: pointer; background: transparent;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 11px; font-size: 13px; font-weight: 500; color: var(--ink-2);
+}
+.chipbtn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+
+.list { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
+.list li { border-bottom: 1px solid var(--line); }
+.list li:last-child { border-bottom: 0; }
+.item {
+  appearance: none; width: 100%; text-align: left; cursor: pointer;
+  display: grid; grid-template-columns: 6px minmax(0, 1fr); gap: 12px;
+  background: transparent; border: 0; padding: 12px 14px 12px 0;
+}
+.item:hover { background: var(--sunk); }
+.item[aria-current="true"] { background: var(--sunk); box-shadow: inset 3px 0 0 var(--accent); }
+.bar { align-self: stretch; border-radius: 0 4px 4px 0; background: var(--line); }
+.bar.alta { background: var(--alta); }
+.bar.media { background: var(--media); }
+.bar.baja { background: var(--baja); }
+.item .from { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .subj { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
+.item.done { opacity: .6; }
+.tag {
+  font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 6px;
+  background: var(--sunk); border: 1px solid var(--line); color: var(--ink-2);
+}
+.item[aria-current="true"] .tag { background: var(--panel); }
+.tag.review { color: var(--warn-ink); background: var(--warn-bg); border-color: transparent; }
+.tag.ok { color: var(--ok); }
+.shimmer { color: transparent; background: linear-gradient(90deg, var(--sunk), var(--line), var(--sunk)); background-size: 200% 100%; border-radius: 6px; animation: sh 1.1s linear infinite; user-select: none; }
+@keyframes sh { to { background-position: -200% 0; } }
+
+.empty-list { padding: 28px 20px; color: var(--ink-2); }
+.empty-list strong { display: block; color: var(--ink); font: 700 18px/1.3 var(--display); margin-bottom: 6px; }
+
+/* Detalle */
+.detail { min-width: 0; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+.detail-head h2 { margin: 0 0 4px; font: 700 24px/1.2 var(--display); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.detail-head .meta { color: var(--ink-2); margin: 0 0 12px; overflow-wrap: anywhere; }
+.badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.badge { display: inline-flex; gap: 7px; align-items: center; padding: 4px 11px; border-radius: 999px; background: var(--sunk); border: 1px solid var(--line); font-size: 13px; font-weight: 500; }
+.badge i { width: 9px; height: 9px; border-radius: 50%; background: var(--baja); }
+.badge.alta i { background: var(--alta); } .badge.media i { background: var(--media); } .badge.baja i { background: var(--baja); }
+.badge.review { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 20px; align-items: start; }
+.panel h3 { margin: 0 0 8px; font: 700 17px/1.3 var(--display); }
+.panel section + section { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.alert { margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-ink); font-weight: 500; }
+.alert b { display: block; }
+.why { color: var(--ink-2); margin: 6px 0 0; }
+dl.data { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+dl.data dt { color: var(--ink-2); }
+dl.data dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+ul.todo { margin: 0; padding-left: 18px; }
+.orig { white-space: pre-wrap; background: var(--sunk); border-radius: 10px; padding: 14px; margin: 0; font: 400 14px/1.55 var(--body); overflow-wrap: anywhere; }
+.runmeta { color: var(--ink-2); font-size: 13px; margin-top: 16px; }
+
+.draft label { display: block; font-weight: 600; font-size: 14px; margin: 12px 0 4px; }
+.draft label:first-of-type { margin-top: 0; }
+.draft input, .draft textarea {
+  width: 100%; border: 1px solid var(--line); background: var(--panel);
+  border-radius: 9px; padding: 9px 11px;
+}
+.draft input[readonly] { background: var(--sunk); color: var(--ink-2); }
+.draft textarea { min-height: 240px; resize: vertical; line-height: 1.55; }
+.actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.note { color: var(--ink-2); font-size: 13px; margin: 10px 0 0; }
+.done-box { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--sunk); font-weight: 500; }
+.done-box.ok { color: var(--ok); }
+
+.placeholder { text-align: center; padding: 70px 24px; color: var(--ink-2); }
+.placeholder strong { display: block; color: var(--ink); font: 700 22px/1.3 var(--display); margin-bottom: 8px; }
+
+footer { max-width: 1320px; margin: 0 auto; padding: 0 24px 32px; color: var(--ink-2); font-size: 13px; }
+
+dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--ink); width: min(560px, calc(100vw - 32px)); padding: 22px; }
+dialog::backdrop { background: rgba(10, 20, 30, .5); }
+dialog h3 { margin: 0 0 12px; font: 700 20px var(--display); }
+dialog label { display: block; font-weight: 600; font-size: 14px; margin: 12px 0 4px; }
+dialog input, dialog textarea { width: 100%; border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 9px 11px; }
+dialog textarea { min-height: 160px; resize: vertical; }
+dialog .actions { justify-content: flex-end; }
+
+#toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+  background: var(--ink); color: var(--panel);
+  padding: 11px 18px; border-radius: 10px; font-weight: 500; max-width: min(520px, calc(100vw - 32px));
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; padding: 0 14px 32px; }
+  .top { padding: 20px 14px 14px; }
+  .top h1 { font-size: 28px; }
+  .inbox { position: static; max-height: none; }
+  .list { max-height: 50vh; }
+  .panel { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Bandeja inteligente</h1>
+    <p>La IA clasifica, prioriza y redacta la respuesta. Tú decides qué sale.</p>
+  </div>
+  <div class="status">
+    <span class="pill" id="modo"><i></i><span>Comprobando…</span></span>
+    <span class="pill" id="outbox">Aprobados: 0</span>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="inbox" aria-label="Bandeja de entrada">
+    <div class="tools">
+      <button class="btn primary" id="analyze" disabled>Analizar bandeja</button>
+      <div class="row">
+        <button class="btn grow" id="load">Cargar ejemplos</button>
+        <button class="btn grow" id="add">Añadir email</button>
+      </div>
+    </div>
+    <div class="filters" id="filters" role="group" aria-label="Filtrar por prioridad"></div>
+    <ul class="list" id="list"></ul>
+  </section>
+  <section class="detail" id="detail" aria-live="polite"></section>
+</main>
+
+<footer>Los emails de ejemplo son ficticios. La bandeja de salida es simulada: no se envía ningún correo real.</footer>
+
+<dialog id="dlg">
+  <form method="dialog" id="dlg-form">
+    <h3>Añadir un email</h3>
+    <label for="f-from">De</label>
+    <input id="f-from" required maxlength="200" placeholder="Nombre &lt;correo@empresa.com&gt;">
+    <label for="f-subj">Asunto</label>
+    <input id="f-subj" maxlength="300">
+    <label for="f-body">Mensaje</label>
+    <textarea id="f-body" required maxlength="6000"></textarea>
+    <div class="actions">
+      <button type="button" class="btn" id="dlg-cancel">Cancelar</button>
+      <button type="submit" class="btn primary">Añadir a la bandeja</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+  const RANK = { alta: 0, media: 1, baja: 2 };
+  const CAT = { presupuesto: "Presupuesto", incidencia: "Incidencia", factura: "Factura", comercial: "Comercial", otro: "Otro" };
+  const DATA_LABELS = {
+    nombre_contacto: "Contacto", empresa: "Empresa", importe: "Importe",
+    fecha_limite: "Fecha", referencia: "Referencia", producto_o_servicio: "Producto o servicio",
+  };
+
+  const state = { emails: [], selected: null, filter: "todas", approved: 0, busy: false };
+  const $ = (id) => document.getElementById(id);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Los emails son texto no fiable: se construye el DOM con textContent, nunca con innerHTML.
+  function h(tag, attrs = {}, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "text") el.textContent = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      el.append(kid.nodeType ? kid : document.createTextNode(kid));
+    }
+    return el;
+  }
+
+  const senderName = (r) => (r.match(/^\s*"?([^"<]+?)"?\s*</) || [, r])[1].trim();
+  const senderAddr = (r) => (r.match(/<([^>]+)>/) || [, r.trim()])[1];
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove("show"), 3800);
+  }
+
+  async function api(path, opts) {
+    const res = await fetch(path, opts);
+    if (!res.ok) {
+      let detail = "Algo ha fallado. Inténtalo de nuevo.";
+      try { detail = (await res.json()).detail || detail; } catch {}
+      throw new Error(typeof detail === "string" ? detail : "Los datos enviados no son válidos.");
+    }
+    return res.json();
+  }
+
+  // ---------- Lista ----------
+  const visible = () => state.emails.filter((e) => {
+    if (state.filter === "todas") return true;
+    return e.result?.triage?.prioridad === state.filter;
+  });
+
+  function positions() {
+    const map = new Map();
+    document.querySelectorAll("#list li[data-id]").forEach((li) => map.set(li.dataset.id, li.getBoundingClientRect().top));
+    return map;
+  }
+
+  function renderFilters() {
+    const counts = { todas: state.emails.length, alta: 0, media: 0, baja: 0 };
+    state.emails.forEach((e) => { const p = e.result?.triage?.prioridad; if (p) counts[p]++; });
+    const box = $("filters");
+    box.replaceChildren(
+      ...["todas", "alta", "media", "baja"].map((f) =>
+        h("button", {
+          class: "chipbtn", type: "button", "aria-pressed": String(state.filter === f),
+          onclick: () => { state.filter = f; renderFilters(); renderList(); },
+        }, `${f === "todas" ? "Todos" : f[0].toUpperCase() + f.slice(1)} (${counts[f]})`)
+      )
+    );
+    box.hidden = state.emails.length === 0;
+  }
+
+  function renderList(animate = false) {
+    const first = animate && !reduced ? positions() : null;
+    const ul = $("list");
+    const items = visible();
+    if (!state.emails.length) {
+      ul.replaceChildren(h("li", {}, h("div", { class: "empty-list" },
+        h("strong", { text: "La bandeja está vacía" }),
+        "Carga 12 emails de ejemplo o pega uno tuyo. Después pulsa Analizar bandeja y verás cómo se reordenan por prioridad.")));
+    } else if (!items.length) {
+      ul.replaceChildren(h("li", {}, h("div", { class: "empty-list" }, "No hay emails con esta prioridad.")));
+    } else {
+      ul.replaceChildren(...items.map(rowFor));
+    }
+    if (first) {
+      ul.querySelectorAll("li[data-id]").forEach((li) => {
+        const before = first.get(li.dataset.id);
+        if (before === undefined) return;
+        const dy = before - li.getBoundingClientRect().top;
+        if (Math.abs(dy) > 1) li.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 650, easing: "cubic-bezier(.2,.8,.2,1)" });
+      });
+    }
+    $("analyze").disabled = state.busy || !state.emails.some((e) => !e.result?.triage);
+    const pending = state.emails.filter((e) => !e.result?.triage).length;
+    $("analyze").textContent = state.busy ? "Analizando…" : pending ? `Analizar ${pending} ${pending === 1 ? "email" : "emails"}` : "Todo analizado";
+  }
+
+  function rowFor(e) {
+    const t = e.result?.triage;
+    const loading = e.loading;
+    const tags = [];
+    if (loading) tags.push(h("span", { class: "tag shimmer", text: "Analizando…" }));
+    else if (t) {
+      tags.push(h("span", { class: "tag", text: CAT[t.categoria] }));
+      if (e.status === "aprobado") tags.push(h("span", { class: "tag ok", text: "Aprobado" }));
+      else if (e.status === "descartado") tags.push(h("span", { class: "tag", text: "Descartado" }));
+      else if (t.requiere_revision) tags.push(h("span", { class: "tag review", text: "Revisar" }));
+    } else if (e.result?.error) tags.push(h("span", { class: "tag review", text: "Error al analizar" }));
+    else tags.push(h("span", { class: "tag", text: "Sin analizar" }));
+
+    return h("li", { "data-id": e.id },
+      h("button", {
+        class: "item" + (e.status ? " done" : ""), type: "button",
+        "aria-current": String(state.selected === e.id),
+        onclick: () => select(e.id),
+      },
+        h("span", { class: "bar " + (t?.prioridad || "") }),
+        h("span", {},
+          h("div", { class: "from", text: senderName(e.remitente) }),
+          h("div", { class: "subj", text: e.asunto || "(sin asunto)" }),
+          h("div", { class: "tags" }, tags))));
+  }
+
+  // ---------- Detalle ----------
+  function select(id) {
+    state.selected = id;
+    renderList();
+    renderDetail();
+    if (matchMedia("(max-width: 860px)").matches) $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderDetail() {
+    const box = $("detail");
+    const e = state.emails.find((x) => x.id === state.selected);
+    if (!e) {
+      box.replaceChildren(h("div", { class: "panel placeholder" },
+        h("strong", { text: "Elige un email" }),
+        "Verás el resumen, los datos clave, qué hacer y un borrador de respuesta listo para revisar."));
+      return;
+    }
+    const t = e.result?.triage;
+    const head = h("div", { class: "detail-head" },
+      h("h2", { text: e.asunto || "(sin asunto)" }),
+      h("p", { class: "meta", text: "De: " + e.remitente }),
+      t && h("div", { class: "badges" },
+        h("span", { class: "badge", text: CAT[t.categoria] }),
+        h("span", { class: "badge " + t.prioridad }, h("i"), "Prioridad " + t.prioridad),
+        h("span", { class: "badge", text: "Confianza " + Math.round(t.confianza * 100) + "%" }),
+        t.requiere_revision && h("span", { class: "badge review", text: "Revisión humana recomendada" })),
+      t?.alerta_seguridad && h("div", { class: "alert", role: "alert" },
+        h("b", { text: "Posible intento de manipulación" }), t.alerta_seguridad));
+
+    const original = h("section", {}, h("h3", { text: "Email original" }), h("pre", { class: "orig", text: e.cuerpo }));
+
+    if (!t) {
+      box.replaceChildren(h("div", { class: "panel" }, head,
+        h("div", { style: "margin-top:18px" }, original),
+        h("div", { class: "actions" },
+          h("button", { class: "btn primary", type: "button", disabled: state.busy, onclick: () => analyze([e.id]), text: "Analizar este email" })),
+        e.result?.error && h("p", { class: "note", text: e.result.error })));
+      return;
+    }
+
+    const datos = Object.entries(t.datos || {}).filter(([, v]) => v);
+    const analysis = h("div", { class: "panel" },
+      h("section", {}, h("h3", { text: "Resumen" }), h("p", { style: "margin:0", text: t.resumen }),
+        h("p", { class: "why", text: "Prioridad " + t.prioridad + ": " + t.motivo_prioridad })),
+      h("section", {}, h("h3", { text: "Datos clave" }),
+        datos.length ? h("dl", { class: "data" }, datos.map(([k, v]) => [h("dt", { text: DATA_LABELS[k] || k }), h("dd", { text: v })]))
+                     : h("p", { class: "why", text: "Este email no incluye datos como importes, fechas o referencias." })),
+      h("section", {}, h("h3", { text: "Qué hacer" }),
+        t.acciones_sugeridas.length ? h("ul", { class: "todo" }, t.acciones_sugeridas.map((a) => h("li", { text: a }))) : h("p", { class: "why", text: "Sin acciones sugeridas." })),
+      original,
+      h("p", { class: "runmeta", text: runMeta(e.result) }));
+
+    box.replaceChildren(h("div", { class: "panel" }, head), h("div", { class: "cols" }, analysis, draftPanel(e, t)));
+  }
+
+  function runMeta(r) {
+    const base = r.modo === "live" ? "Analizado con Claude" : "Analizado en modo demo (reglas, sin IA)";
+    const parts = [base, r.latencia_ms + " ms"];
+    if (r.tokens_entrada) parts.push((r.tokens_entrada + r.tokens_salida) + " tokens");
+    return parts.join(" · ");
+  }
+
+  function draftPanel(e, t) {
+    const to = senderAddr(e.remitente);
+    const subject = h("input", { id: "d-subj", value: t.borrador.asunto, maxlength: "300", disabled: !!e.status });
+    const body = h("textarea", { id: "d-body", disabled: !!e.status, text: t.borrador.cuerpo });
+    body.value = t.borrador.cuerpo;
+    const approve = async () => {
+      try {
+        const r = await api("/api/outbox", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email_id: e.id, destinatario: to, asunto: subject.value, cuerpo: body.value }),
+        });
+        e.status = "aprobado";
+        state.approved = r.aprobados;
+        $("outbox").textContent = "Aprobados: " + r.aprobados;
+        toast("Borrador aprobado y movido a la bandeja de salida. No se ha enviado nada real.");
+        renderList(); renderDetail();
+      } catch (err) { toast(err.message); }
+    };
+    const discard = () => { e.status = "descartado"; renderList(); renderDetail(); };
+
+    return h("div", { class: "panel draft" },
+      h("h3", { text: "Borrador de respuesta" }),
+      h("label", { for: "d-to", text: "Para" }), h("input", { id: "d-to", value: to, readonly: true }),
+      h("label", { for: "d-subj", text: "Asunto" }), subject,
+      h("label", { for: "d-body", text: "Mensaje" }), body,
+      e.status
+        ? h("div", { class: "done-box" + (e.status === "aprobado" ? " ok" : ""), text: e.status === "aprobado" ? "Aprobado. Está en la bandeja de salida (simulada)." : "Descartado. No se enviará." })
+        : [h("div", { class: "actions" },
+            h("button", { class: "btn primary", type: "button", onclick: approve, text: "Aprobar y mover a salida" }),
+            h("button", { class: "btn", type: "button", onclick: discard, text: "Descartar" })),
+           h("p", { class: "note", text: "Puedes editar el texto antes de aprobar. Los marcadores entre corchetes, como [indicar fecha], hay que completarlos a mano." })]);
+  }
+
+  // ---------- Acciones ----------
+  async function analyze(onlyIds) {
+    const targets = state.emails.filter((e) => (onlyIds ? onlyIds.includes(e.id) : !e.result?.triage));
+    if (!targets.length || state.busy) return;
+    state.busy = true;
+    targets.forEach((e) => { e.loading = true; });
+    renderList(); renderDetail();
+    try {
+      const results = await api("/api/triage", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: targets.map((e) => ({ id: e.id, remitente: e.remitente, asunto: e.asunto, cuerpo: e.cuerpo })) }),
+      });
+      results.forEach((r) => { const e = state.emails.find((x) => x.id === r.id); if (e) e.result = r; });
+      state.emails.forEach((e, i) => { e._i = i; });
+      state.emails.sort((a, b) => rank(a) - rank(b) || a._i - b._i);
+      targets.forEach((e) => { e.loading = false; });
+      state.busy = false;
+      renderFilters(); renderList(true);
+      const top = state.emails.find((e) => e.result?.triage);
+      if (top && !onlyIds) { state.selected = top.id; renderList(); }
+      renderDetail();
+    } catch (err) {
+      targets.forEach((e) => { e.loading = false; });
+      state.busy = false;
+      renderFilters(); renderList(); renderDetail();
+      toast(err.message);
+    }
+  }
+  const rank = (e) => (e.result?.triage ? RANK[e.result.triage.prioridad] : 3);
+
+  async function loadSamples() {
+    try {
+      const samples = await api("/api/samples");
+      const known = new Set(state.emails.map((e) => e.id));
+      samples.filter((s) => !known.has(s.id)).forEach((s) => state.emails.push({ ...s }));
+      renderFilters(); renderList(); renderDetail();
+    } catch (err) { toast(err.message); }
+  }
+
+  async function init() {
+    renderFilters(); renderList(); renderDetail();
+    try {
+      const hl = await api("/api/health");
+      const pill = $("modo");
+      pill.className = "pill " + hl.modo;
+      pill.lastChild.textContent = hl.modo === "live" ? "Claude activo" : "Modo demo (sin IA)";
+      pill.title = hl.modo === "live" ? "Modelo: " + hl.modelo : "Añade ANTHROPIC_API_KEY para usar Claude";
+    } catch { $("modo").lastChild.textContent = "Sin conexión con la API"; }
+  }
+
+  $("load").onclick = loadSamples;
+  $("analyze").onclick = () => analyze(null);
+  $("add").onclick = () => $("dlg").showModal();
+  $("dlg-cancel").onclick = () => $("dlg").close();
+  $("dlg-form").addEventListener("submit", () => {
+    const e = { id: "u" + Date.now(), remitente: $("f-from").value.trim(), asunto: $("f-subj").value.trim(), cuerpo: $("f-body").value.trim() };
+    if (!e.remitente || !e.cuerpo) return;
+    state.emails.unshift(e);
+    state.selected = e.id;
+    $("dlg-form").reset();
+    renderFilters(); renderList(); renderDetail();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
